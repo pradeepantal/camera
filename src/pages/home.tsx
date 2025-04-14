@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import "../app/globals.css";
 import styles from "./home.module.css";
+import axios from 'axios';
 
 function Home() {
   var videoRef = useRef(null);
@@ -12,6 +13,8 @@ function Home() {
   const [showVideo, setShowVideo] = useState(true);
   const [showCanvas, setShowCanvas] = useState(false);
   const [showImage, setShowImage] = useState(false);
+  const [carNumber, setCarNumber] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     startCamera();
@@ -54,15 +57,63 @@ function Home() {
   async function photo() {
     let can = canvasRef.current;
     let v = videoRef.current;
-    can.width = 300;
-    can.height = 200;
+    can.width = 200;
+    can.height = 300;
     can.getContext("2d").drawImage(v, 0, 0, 200, 300);
-    const imageDataUrl = can.toDataURL("image/jpeg");
-   // setPhotos(imageDataUrl);
+    const imageDataUrl = can.toDataURL("image/jpeg"); 
+    setShowVideo(false);
     setStream(null);
-    setShowVideo(false)
-
+    await processImage(imageDataUrl); 
   }
+
+
+  const processImage = async (imageDataUrl: string) => {
+    try {
+      setLoading(true);
+      const base64Data = imageDataUrl.replace(/^data:image\/jpeg;base64,/, '');
+
+      const apiKey = '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'; // Hide or move to backend in production
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      };
+
+      const response = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Extract Extract the car number (license plate) clearly visible in this image. Only return the number as it appears on the plate.' },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:image/jpeg;base64,${base64Data}`,
+                  },
+                },
+              ],
+            },
+          ],
+          max_tokens: 300,
+        },
+        { headers }
+      );
+
+      const extractedData = response.data.choices[0].message.content;
+      setCarNumber(extractedData);
+
+      console.log('Extracted Data:', extractedData);
+      // parseAndSetFormData(extractedData); // Uncomment if you define this
+    } catch (error) {
+      console.error('Error processing image with OpenAI Vision:', error);
+      setCarNumber('Failed to extract number, Please try Again!')
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   async function getDevices() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
@@ -79,33 +130,38 @@ function Home() {
 
   return (
     <>
-      <div className="grid  items-center justify-items-center min-h-screen ">
-        {showVideo ? 
-        <div className={`${styles.video} `}>
-          <video
-            width="400"
-            height="300"
-            ref={videoRef}
-            playsInline
-            autoPlay
-          ></video>
-        </div>
-       : null }
+      <div className={`${styles.container}`}>
+        {showVideo ?
+          <div className={`${styles.video} `}>
+            <video
+              width="400"
+              height="300"
+              ref={videoRef}
+              playsInline
+              autoPlay
+            ></video>
+          </div>
+          : null}
         <div>
-         
-        <div>
-        <canvas id="canvas" ref={canvasRef}></canvas>
-        </div>
-    
-        <div className="grid grid-cols-2 gap-2">
+
+          <canvas id="canvas" ref={canvasRef}></canvas>
+
+          <div className={`${styles.buttonGroup}`}>
             <button className={`${styles.playButton} `} onClick={start}>
-              Start
+              Start Capture
             </button>
             <button className={`${styles.playButton} `} onClick={photo}>
-              Photo
+              Capture Photo
             </button>
-        </div>
-        
+          </div>
+
+          {loading ? (
+            "Extracting..."
+          ) : carNumber ? (
+            <div className={`${styles.extractedText}`}>
+              The car number is: {carNumber}
+            </div>
+          ) : null}
         </div>
       </div>
     </>
