@@ -72,7 +72,7 @@ function Home() {
       setLoading(true);
       const base64Data = imageDataUrl.replace(/^data:image\/jpeg;base64,/, '');
 
-      const apiKey = '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'; // Hide or move to backend in production
+      const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
       const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
