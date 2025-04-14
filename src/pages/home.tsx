@@ -72,7 +72,7 @@ function Home() {
       setLoading(true);
       const base64Data = imageDataUrl.replace(/^data:image\/jpeg;base64,/, '');
 
-      const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
+      const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY;
       const headers = {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
