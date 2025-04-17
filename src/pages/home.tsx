@@ -86,7 +86,7 @@ function Home() {
             {
               role: 'user',
               content: [
-                { type: 'text', text: 'Extract Extract the car number (license plate) clearly visible in this image. Only return the number as it appears on the plate.' },
+                { type: 'text', text: 'Please extract the Vehicle Identification Number (VIN) visible in this image. Only return the VIN exactly as shown, without any extra text.' },
                 {
                   type: 'image_url',
                   image_url: {
@@ -159,7 +159,7 @@ function Home() {
             "Extracting..."
           ) : carNumber ? (
             <div className={`${styles.extractedText}`}>
-              The car number is: {carNumber}
+              The VIN number of the car is: {carNumber}
             </div>
           ) : null}
         </div>
